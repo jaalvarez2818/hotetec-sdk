@@ -1,0 +1,7 @@
+/build/
+/dist/
+/jaalvarez2818_airport_docs.egg-info/
+/.venv/
+/.idea/
+.idea/*
+.idea
