@@ -2,10 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name='jaalvarez2818_hotetec_sdk',
-    version='0.0.1',
+    version='0.0.3',
     packages=find_packages(),
     install_requires=[
-        'requests'
+        'requests',
+        'xmltodict',
     ],
     url='https://github.com/jaalvarez2818/hotetec-sdk',
     author='José Angel Alvarez Abraira',
