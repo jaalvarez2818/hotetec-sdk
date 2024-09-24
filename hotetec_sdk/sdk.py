@@ -142,9 +142,9 @@ class HotetecSDK:
                         availability=availability,
                     ))
 
-                return hotels
+                return {'availability': hotels}
 
             except Exception as e:
-                print(f'Error: {e}')
+                return {'error': {'code': 500, 'text': 'Unknown error'}}
         else:
-            raise f'Error: {response.status_code}'
+            return {'error': {'code': 500, 'text': 'Unknown error'}}
