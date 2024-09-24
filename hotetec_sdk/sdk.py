@@ -75,7 +75,7 @@ class HotetecSDK:
                 <coddiv>{self.CURRENCY}</coddiv>
             </DisponibilidadHotelPeticion>
         """
-        print(xml_data)
+
         response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
 
         if response.status_code == 200:
@@ -97,7 +97,8 @@ class HotetecSDK:
                     rooms_data = hotel.get('infhab', []) or []
                     for room in rooms_data:
                         if room.get('@id') and room.get('@refdis') and room.get('cupest') in ['DS']:
-                            availability[room.get('@refdis')] = []
+                            if room.get('@refdis') not in availability:
+                                availability[room.get('@refdis')] = []
 
                             cancellation_restrictions = None
                             cancellation_data = room.get('rstcan', {}) or {}
