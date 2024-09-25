@@ -8,14 +8,18 @@ from hotetec_sdk.entities.room import Room
 from hotetec_sdk.entities.room_service import RoomService
 from hotetec_sdk.entities.cancellation_restriction import CancellationRestriction
 
-from hotetec_sdk import config
+
+# from hotetec_sdk import config
 
 
 class HotetecSDK:
     URI = 'https://hotel.hotetec.com/publisher/xmlservice.srv'
-    AGENCY_CODE = config.HOTETEC_CONFIG.get('AGENCY_CODE')
-    USERNAME = config.HOTETEC_CONFIG.get('USERNAME')
-    PASSWORD = config.HOTETEC_CONFIG.get('PASSWORD')
+    # AGENCY_CODE = config.HOTETEC_CONFIG.get('AGENCY_CODE')
+    # USERNAME = config.HOTETEC_CONFIG.get('USERNAME')
+    # PASSWORD = config.HOTETEC_CONFIG.get('PASSWORD')
+    AGENCY_CODE = 'CL1'
+    USERNAME = 'CLTXML'
+    PASSWORD = 'CLTXML'
     SYSTEM_CODE = 'XML'
     HEADERS = {'Content-Type': 'application/xml'}
     CURRENCY = 'USD'
@@ -27,21 +31,23 @@ class HotetecSDK:
         self.authenticate()
 
     def authenticate(self):
-        xml_data = f"""
-            <SesionAbrirPeticion>
-                <codsys>{self.SYSTEM_CODE}</codsys>
-                <codage>{self.AGENCY_CODE}</codage>
-                <idtusu>{self.USERNAME}</idtusu>
-                <pasusu>{self.PASSWORD}</pasusu>
-                <codidi>{self.LANGUAGE}</codidi>
-            </SesionAbrirPeticion>
-        """
+        json_data = {
+            'SesionAbrirPeticion': {
+                'codsys': self.SYSTEM_CODE,
+                'codage': self.AGENCY_CODE,
+                'idtusu': self.USERNAME,
+                'pasusu': self.PASSWORD,
+                'codidi': self.LANGUAGE,
+            }
+        }
+        xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
         response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
 
         if response.status_code == 200:
             try:
                 xml_dict = xmltodict.parse(response.text)
                 self.TOKEN = xml_dict.get('SesionAbrirRespuesta', {}).get('ideses', None)
+                return self.TOKEN
             except Exception as e:
                 print(f'Error: {e}')
         else:
@@ -53,35 +59,30 @@ class HotetecSDK:
         if type(end_date) is datetime.date:
             start_date = format(end_date, 'dd/mm/YYYY')
 
-        distributions_str = ''
-        for index, dist in enumerate(distributions):
-            distributions_str += f"""
-                <distri id="{index + 1}">
-                    <numuni>1</numuni>
-                    <numadl>{dist.get('adults', 0) or 0}</numadl>
-                    <numnin>{dist.get('children', 0) or 0}</numnin>
-                </distri>
-            """
+        json_data = {
+            'DisponibilidadHotelPeticion': {
+                'ideses': self.TOKEN,
+                'codtou': 'HTI',
+                'fecini': start_date,
+                'fecfin': end_date,
+                'codzge': zone_code,
+                'chkscm': 'S',
+                'distri': [{
+                    '@id': index + 1,
+                    'numuni': 1,
+                    'numadl': dist.get('adults', 0) or 0,
+                    'numnin': dist.get('children', 0) or 0
+                } for index, dist in enumerate(distributions)],
+                'coddiv': self.CURRENCY
+            }
+        }
 
-        xml_data = f"""
-            <DisponibilidadHotelPeticion>
-                <ideses>{self.TOKEN}</ideses>
-                <codtou>HTI</codtou>
-                <fecini>{start_date}</fecini>
-                <fecfin>{end_date}</fecfin>
-                <codzge>{zone_code}</codzge>
-                {distributions_str}
-                <chkscm>S</chkscm>
-                <coddiv>{self.CURRENCY}</coddiv>
-            </DisponibilidadHotelPeticion>
-        """
-
+        xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
         response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
 
         if response.status_code == 200:
             try:
                 xml_dict = xmltodict.parse(response.text)
-
                 response = xml_dict.get('DisponibilidadHotelRespuesta')
 
                 if response.get('coderr'):
@@ -143,9 +144,91 @@ class HotetecSDK:
                         availability=availability,
                     ))
 
-                return {'availability': hotels}
+                return {'availability': hotels, 'session_id': self.TOKEN}
 
             except Exception as e:
                 return {'error': {'code': 500, 'text': 'Unknown error'}}
         else:
             return {'error': {'code': 500, 'text': 'Unknown error'}}
+
+    def block(self, session_id, hotel_id, distributions):
+        customer_type_map = {'adults': 'adl', 'children': 'nin'}
+        customers_data = {'adl': [], 'nin': []}
+        rooms_data = []
+
+        for room_id, dist in distributions.items():
+            customers_id = []
+            for customer in dist:
+                customers_id += [customer.get('id')]
+
+                customers_data[customer_type_map.get(customer.get('customer_type'))] += [
+                    {
+                        '@id': customer.get('id'),
+                        'fecnac': customer.get('birthdate')
+                    }
+                ]
+
+            rooms_data += [{
+                '@id': room_id,
+                'pasid': customers_id,
+                'numuni': '1'
+            }]
+
+        json_data = {
+            'BloqueoServicioPeticion': {
+                'ideses': session_id,
+                'codtou': 'HTI',
+                'pasage': customers_data,
+                'bloser': {
+                    '@id': hotel_id,
+                    'dissmo': rooms_data
+                },
+                'accion': 'A'
+            }
+        }
+
+        xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
+
+        response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
+
+        if response.status_code == 200:
+            try:
+                xml_dict = xmltodict.parse(response.text)
+                response = xml_dict.get('BloqueoServicioRespuesta')
+
+                if response.get('coderr'):
+                    return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
+
+                return {'response': {
+                    'start_date': response.get('resser', {}).get('fecini'),
+                    'end_date': response.get('resser', {}).get('fecfin'),
+                    'hotel': {
+                        'name': response.get('resser', {}).get('nomser'),
+                        'category': response.get('resser', {}).get('codsca'),
+                        'zone_code': response.get('resser', {}).get('codzge'),
+                        'code': response.get('resser', {}).get('codser'),
+                    },
+                    'payment': {
+                        'total_amount': response.get('infrsr', {}).get('infrpg', {}).get('inffpg', {}).get('imptot'),
+                        'limit_date': response.get('infrsr', {}).get('infrpg', {}).get('inffpg', {}).get('fecpag'),
+                    },
+                    'rooms': [
+                        {
+                            'fare_code': item['codtrf'],
+                            'fare_name': item['nomtrf'],
+                            'cancellation_restrictions': {
+                                'limit_date': item.get('rstcan', {}).get('feccan'),
+                                'amount': item.get('rstcan', {}).get('impcan'),
+                            },
+                            'customers': item.get('estpas', {}).get('pasid', []),
+                            'services': [
+                                {'service': service.get('txtinf'), 'reference': service.get('refnot')}
+                                for service in item.get('notser', [])
+                            ]
+                        } for item in response.get('resser', {}).get('estsmo', [])
+                    ]
+                }, 'session_id': session_id}
+            except Exception as e:
+                print(f'Error: {e}')
+        else:
+            raise f'Error: {response.status_code}'
