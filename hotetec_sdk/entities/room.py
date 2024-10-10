@@ -9,6 +9,8 @@ class Room:
             self,
             room_id: str,
             distribution: str,
+            adults: int,
+            children: int,
             max_people: int,
             min_people: int,
             adults_max: int,
@@ -27,6 +29,8 @@ class Room:
         self.distribution = distribution
         self.fare_code = fare_code
         self.fare_name = fare_name
+        self.adults = adults
+        self.children = children
         self.max_people = max_people
         self.min_people = min_people
         self.adults_max = adults_max

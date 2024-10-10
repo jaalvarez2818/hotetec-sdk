@@ -117,6 +117,8 @@ class HotetecSDK:
 
                             availability[room.get('@refdis')].append(Room(
                                 room_id=room.get('@id'),
+                                adults=distributions[room.get('@refdis')].get('adults'),
+                                children=distributions[room.get('@refdis')].get('children', 0) or 0,
                                 distribution=room.get('@refdis'),
                                 max_people=int(room.get('capmax', '0') or '0'),
                                 min_people=int(room.get('capmin', '0') or '0'),
