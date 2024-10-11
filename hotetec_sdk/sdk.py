@@ -26,9 +26,12 @@ class HotetecSDK:
     TOKEN = None
     LANGUAGE = None
 
-    def __init__(self, lang='es'):
+    def __init__(self, token=None, lang='es'):
         self.LANGUAGE = lang.upper()
-        self.authenticate()
+        if not token:
+            self.authenticate()
+        else:
+            self.TOKEN = token
 
     def authenticate(self):
         json_data = {
@@ -151,7 +154,7 @@ class HotetecSDK:
         else:
             return {'error': {'code': 500, 'text': 'Unknown error'}}
 
-    def block(self, session_id, hotel_id, distributions):
+    def block(self, hotel_id, distributions):
         customer_type_map = {'adults': 'adl', 'children': 'nin'}
         customers_data = {'adl': [], 'nin': []}
         rooms_data = []
@@ -176,7 +179,7 @@ class HotetecSDK:
 
         json_data = {
             'BloqueoServicioPeticion': {
-                'ideses': session_id,
+                'ideses': self.TOKEN,
                 'codtou': 'HTI',
                 'pasage': customers_data,
                 'bloser': {
@@ -227,7 +230,153 @@ class HotetecSDK:
                             ]
                         } for item in response.get('resser', {}).get('estsmo', [])
                     ]
-                }, 'session_id': session_id}
+                }, 'session_id': self.TOKEN}
+            except Exception as e:
+                print(f'Error: {e}')
+        else:
+            raise f'Error: {response.status_code}'
+
+    def reserve(self, customers, notes):
+        birth_dates = []
+        contact_info = {}
+        for customer in customers:
+            birth_dates += [
+                {'@id': customer.get('id'), 'fecnac': customer.get('birthdate')}
+            ]
+            if str(customer.get('id')) == '1':
+                contact_info.update({
+                    'nombre': customer.get('first_name'),
+                    'priape': customer.get('last_name'),
+                    'tel': customer.get('phone'),
+                    'mai': customer.get('email'),
+                    'pasapt': customer.get('document_number'),
+                })
+
+        json_data = {
+            'ReservaCerrarPeticion': {
+                'ideses': self.TOKEN,
+                'codtou': 'HTT',
+                'accion': 'F',
+                'notser': {
+                    '@id': 1,
+                    'txtinf': notes
+                },
+                'infpas': birth_dates,
+                'percon': {
+                    '@id': 1,
+                    **contact_info
+                }
+            }
+        }
+
+        xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
+        print(xml_data)
+        # response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
+        #
+        # if response.status_code == 200:
+        #     try:
+        #         xml_dict = xmltodict.parse(response.text)
+        #         response = xml_dict.get('ReservaCerrarRespuesta')
+        #
+        #         if response.get('coderr'):
+        #             return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
+        #
+        #         return {'response': {}, 'session_id': session_id}
+        #     except Exception as e:
+        #         print(f'Error: {e}')
+        # else:
+        #     raise f'Error: {response.status_code}'
+
+    def list_reservations(self, first_name=None, last_name=None, document_number=None, start_date=None, end_date=None,
+                          per_page=20, page=1):
+        filters = {'numrst': per_page, 'indpag': page}
+        if start_date:
+            filters.update({'fecini': start_date})
+        if end_date:
+            filters.update({'fecfin': end_date})
+        if first_name:
+            filters.update({'nombre': first_name})
+        if last_name:
+            filters.update({'priape': last_name})
+        if document_number:
+            filters.update({'pasapt': document_number})
+
+        json_data = {
+            'ReservaListarPeticion': {
+                'ideses': self.TOKEN,
+                'codtou': 'HTT',
+                **filters
+            }
+        }
+
+        xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
+        print(xml_data)
+        response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
+
+        if response.status_code == 200:
+            try:
+                xml_dict = xmltodict.parse(response.text)
+                response = xml_dict.get('ReservaListarRespuesta')
+                print(response)
+
+                if response.get('coderr'):
+                    return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
+
+                #         return {'response': {}, 'session_id': session_id}
+            except Exception as e:
+                print(f'Error: {e}')
+        else:
+            raise f'Error: {response.status_code}'
+
+    def get_reservation(self, locator):
+        json_data = {
+            'ReservaAbrirPeticion': {
+                'ideses': self.TOKEN,
+                'codtou': 'HTT',
+                'locata': locator,
+            }
+        }
+
+        xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
+        response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
+
+        if response.status_code == 200:
+            try:
+                xml_dict = xmltodict.parse(response.text)
+                response = xml_dict.get('ReservaAbrirRespuesta')
+                print(response)
+
+                if response.get('coderr'):
+                    return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
+
+                #         return {'response': {}, 'session_id': session_id}
+            except Exception as e:
+                print(f'Error: {e}')
+        else:
+            raise f'Error: {response.status_code}'
+
+    def cancel_reservation(self, locator):
+        json_data = {
+            'ReservaCancelarPeticion': {
+                'ideses': self.TOKEN,
+                'codtou': 'HTT',
+                'locata': locator,
+            }
+        }
+
+        xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
+        response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
+
+        if response.status_code == 200:
+            try:
+                xml_dict = xmltodict.parse(response.text)
+                response = xml_dict.get('ReservaCancelarRespuesta')
+                print(response)
+
+                if response.get('coderr'):
+                    return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
+
+                #         return {'response': {}, 'session_id': session_id}
             except Exception as e:
                 print(f'Error: {e}')
         else:
