@@ -406,3 +406,28 @@ class HotetecSDK:
                 print(f'Error: {e}')
         else:
             raise f'Error: {response.status_code}'
+
+    def get_hotel_information(self, hotel_code: str):
+        json_data = {
+            'InformacionServicioPeticion': {
+                'ideses': self.TOKEN,
+                'codtou': 'HTI',
+                'codser': hotel_code,
+            }
+        }
+        xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
+        response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
+
+        if response.status_code == 200:
+            try:
+                xml_dict = xmltodict.parse(response.text)
+                response = xml_dict.get('InformacionServicioRespuesta')
+
+                if response.get('coderr'):
+                    return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
+
+                return {'response': response.get('servic')}
+            except Exception as e:
+                print(f'Error: {e}')
+        else:
+            raise f'Error: {response.status_code}'
