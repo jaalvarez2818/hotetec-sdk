@@ -75,7 +75,7 @@ class HotetecSDK:
                     'numuni': 1,
                     'numadl': dist.get('adults', 0) or 0,
                     'numnin': dist.get('children', 0) or 0,
-                    'edanin': dist.get('childrenAges', [])
+                    'edanin': dist.get('children_ages', [])
                 } for index, dist in enumerate(distributions)],
                 'coddiv': self.CURRENCY
             }

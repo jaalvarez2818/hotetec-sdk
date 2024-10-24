@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='jaalvarez2818_hotetec_sdk',
-    version='0.1.8',
+    version='0.1.9',
     packages=find_packages(),
     install_requires=[
         'requests',
