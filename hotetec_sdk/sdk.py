@@ -238,22 +238,7 @@ class HotetecSDK:
         else:
             raise f'Error: {response.status_code}'
 
-    def reserve(self, customers, notes):
-        birth_dates = []
-        contact_info = {}
-        for customer in customers:
-            birth_dates += [
-                {'@id': customer.get('id'), 'fecnac': customer.get('birthdate')}
-            ]
-            if str(customer.get('id')) == '1':
-                contact_info.update({
-                    'nombre': customer.get('first_name'),
-                    'priape': customer.get('last_name'),
-                    'tel': customer.get('phone'),
-                    'mai': customer.get('email'),
-                    'pasapt': customer.get('document_number'),
-                })
-
+    def reserve(self, contact_information, customers, notes):
         json_data = {
             'ReservaCerrarPeticion': {
                 'ideses': self.TOKEN,
@@ -263,31 +248,38 @@ class HotetecSDK:
                     '@id': 1,
                     'txtinf': notes
                 },
-                'infpas': birth_dates,
+                'infpas': [
+                    {'@id': customer.get('id'), 'fecnac': customer.get('birthdate')}
+                    for customer in customers
+                ],
                 'percon': {
                     '@id': 1,
-                    **contact_info
+                    'nombre': contact_information.get('first_name'),
+                    'priape': contact_information.get('last_name'),
+                    'tel': contact_information.get('phone'),
+                    'mai': contact_information.get('email'),
+                    'pasapt': contact_information.get('document_number'),
                 }
             }
         }
 
         xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
-        print(xml_data)
-        # response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
-        #
-        # if response.status_code == 200:
-        #     try:
-        #         xml_dict = xmltodict.parse(response.text)
-        #         response = xml_dict.get('ReservaCerrarRespuesta')
-        #
-        #         if response.get('coderr'):
-        #             return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
-        #
-        #         return {'response': {}, 'session_id': session_id}
-        #     except Exception as e:
-        #         print(f'Error: {e}')
-        # else:
-        #     raise f'Error: {response.status_code}'
+        response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
+
+        if response.status_code == 200:
+            try:
+                xml_dict = xmltodict.parse(response.text)
+                response = xml_dict.get('ReservaCerrarRespuesta')
+                print(response)
+
+                if response.get('coderr'):
+                    return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
+
+                return {'response': {}, 'session_id': self.TOKEN}
+            except Exception as e:
+                print(f'Error: {e}')
+        else:
+            raise f'Error: {response.status_code}'
 
     def list_reservations(self, first_name=None, last_name=None, document_number=None, start_date=None, end_date=None,
                           per_page=20, page=1):
