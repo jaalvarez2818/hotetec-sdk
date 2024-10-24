@@ -140,6 +140,7 @@ class HotetecSDK:
                             ))
 
                     hotels.append(Hotel(
+                        reference=hotel.get('@id'),
                         name=hotel.get('nomser'),
                         category=hotel.get('codsca'),
                         services=hotel.get('codcas', []) or [],
