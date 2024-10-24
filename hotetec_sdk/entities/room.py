@@ -31,8 +31,8 @@ class Room:
         self.min_people = min_people
         self.adults_max = adults_max
         self.children_max = children_max
-        self.non_commisionable_amount = non_commissionable_amount
-        self.commisionable_amount = commissionable_amount
+        self.non_commissionable_amount = non_commissionable_amount
+        self.commissionable_amount = commissionable_amount
         self.base_amount = base_amount
         self.iva_amount = iva_amount
         self.tax_amount = tax_amount
