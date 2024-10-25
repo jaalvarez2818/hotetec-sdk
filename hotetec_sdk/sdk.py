@@ -392,7 +392,7 @@ class HotetecSDK:
         json_data = {
             'ReservaAbrirPeticion': {
                 'ideses': self.TOKEN,
-                'codtou': 'HTT',
+                'codtou': 'HTI',
                 'locata': locator,
             }
         }
@@ -404,12 +404,11 @@ class HotetecSDK:
             try:
                 xml_dict = xmltodict.parse(response.text)
                 response = xml_dict.get('ReservaAbrirRespuesta')
-                print(response)
 
                 if response.get('coderr'):
                     return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
 
-                #         return {'response': {}, 'session_id': session_id}
+                return {'response': self.as_reservation(response)}
             except Exception as e:
                 print(f'Error: {e}')
         else:
