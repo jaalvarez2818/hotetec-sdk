@@ -440,12 +440,14 @@ class HotetecSDK:
             try:
                 xml_dict = xmltodict.parse(response.text)
                 response = xml_dict.get('ReservaCancelarRespuesta')
-                print(response)
 
                 if response.get('coderr'):
                     return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
 
-                #         return {'response': {}, 'session_id': session_id}
+                return {'response': {
+                    'currency': response.get('coddiv'),
+                    'cancellation_amount': response.get('impcan'),
+                    'locator': response.get('locata')}}
             except Exception as e:
                 print(f'Error: {e}')
         else:
