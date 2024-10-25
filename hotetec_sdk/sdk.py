@@ -249,7 +249,7 @@ class HotetecSDK:
                     'txtinf': notes
                 },
                 'infpas': [
-                    {'@id': customer.get('id'), 'fecnac': customer.get('birthdate')}
+                    {'@id': customer.get('id'), 'fecnac': format(customer.get('birthdate'), '%d/%m/%Y')}
                     for customer in customers
                 ],
                 'percon': {
@@ -265,21 +265,87 @@ class HotetecSDK:
 
         xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
         response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
-
         if response.status_code == 200:
             try:
                 xml_dict = xmltodict.parse(response.text)
                 response = xml_dict.get('ReservaCerrarRespuesta')
-                print(response)
 
                 if response.get('coderr'):
                     return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
 
-                return {'response': {}, 'session_id': self.TOKEN}
+                return {'response': self.as_reservation(response), 'session_id': self.TOKEN}
             except Exception as e:
                 print(f'Error: {e}')
         else:
             raise f'Error: {response.status_code}'
+
+    def as_reservation(self, response):
+        passengers = response.get('respas', [])
+        if type(passengers) is dict:
+            passengers = [passengers]
+        hotel = response.get('resser', {})
+        rooms_data = hotel.get('estsmo', [])
+        if type(rooms_data) is dict:
+            rooms_data = [rooms_data]
+        rooms = []
+
+        for item in rooms_data:
+            customers = item.get('estpas', {}).get('pasid', [])
+            if type(customers) is dict:
+                customers = [customers]
+            rooms += [{
+                'id': item.get('@id'),
+                'type': item.get('codsmo'),
+                'fare_code': item.get('codtrf'),
+                'fare_name': item.get('nomtrf'),
+                'status': item.get('cupest'),
+                'commissionable_amount': item.get('impcom'),
+                'non_commissionable_amount': item.get('impnoc'),
+                'locator': item.get('locata'),
+                'cancellation_restrictions': {
+                    'date': item.get('rstcan', {}).get('feccan'),
+                    'amount': item.get('rstcan', {}).get('impcan'),
+                },
+                'customers': customers
+            }]
+
+        return {
+            'locator': response.get('locata'),
+            'status': response.get('cupest'),
+            'created_at': response.get('feccre'),
+            'start_date': response.get('fecini'),
+            'end_date': response.get('fecfin'),
+            'currency': response.get('coddiv'),
+            'commissionable_amount': response.get('impcom'),
+            'non_commissionable_amount': response.get('impnoc'),
+            'passengers': [
+                {'id': item.get('@id'), 'birthdate': item.get('fecnac'), 'type': item.get('tippas'),
+                 'commissionable_amount': item.get('impcom'),
+                 'non_commissionable_amount': item.get('impnoc'), }
+                for item in passengers
+            ],
+            'hotel': {
+                'id': hotel.get('@id'),
+                'start_date': hotel.get('fecini'),
+                'end_date': hotel.get('fecfin'),
+                'name': hotel.get('nomser'),
+                'category': hotel.get('codsca'),
+                'zone_code': hotel.get('codzge'),
+                'hotel_code': hotel.get('codser'),
+                'commissionable_amount': hotel.get('impcom'),
+                'non_commissionable_amount': hotel.get('impnoc'),
+            },
+            'rooms': rooms,
+            'contact_info': {
+                'id': response.get('percon', {}).get('@id'),
+                'first_name': response.get('percon', {}).get('nombre'),
+                'last_name': response.get('percon', {}).get('priape'),
+                'document_number': response.get('percon', {}).get('pasapt'),
+                'phone': response.get('percon', {}).get('tel'),
+                'email': response.get('percon', {}).get('mai'),
+            },
+            'notes': response.get('notser', {}).get('txtinf')
+        }
 
     def list_reservations(self, first_name=None, last_name=None, document_number=None, start_date=None, end_date=None,
                           per_page=20, page=1):
