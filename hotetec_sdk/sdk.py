@@ -370,19 +370,29 @@ class HotetecSDK:
         }
 
         xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
-        print(xml_data)
         response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
 
         if response.status_code == 200:
             try:
                 xml_dict = xmltodict.parse(response.text)
                 response = xml_dict.get('ReservaListarRespuesta')
-                print(response)
 
                 if response.get('coderr'):
                     return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
 
-                #         return {'response': {}, 'session_id': session_id}
+                reservations = [{
+                    'locator': item.get('locata'),
+                    'status': item.get('cupest'),
+                    'hotel_code': item.get('codser'),
+                    'created_at': item.get('timcre'),
+                    'start_date': item.get('fecini'),
+                    'end_date': item.get('fecfin'),
+                    'currency': item.get('coddiv'),
+                    'commissionable_amount': item.get('impcom'),
+                    'non_commissionable_amount': item.get('impnoc'),
+                    'name': item.get('percon', {}).get('nombre'),
+                } for item in response.get('estres')]
+                return {'response': reservations}
             except Exception as e:
                 print(f'Error: {e}')
         else:
