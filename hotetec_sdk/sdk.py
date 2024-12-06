@@ -8,19 +8,14 @@ from hotetec_sdk.entities.room import Room
 from hotetec_sdk.entities.room_service import RoomService
 from hotetec_sdk.entities.cancellation_restriction import CancellationRestriction
 
-
-# from hotetec_sdk import config
+from hotetec_sdk import config
 
 
 class HotetecSDK:
     URI = 'https://hotel.hotetec.com/publisher/xmlservice.srv'
-    # AGENCY_CODE = config.HOTETEC_CONFIG.get('AGENCY_CODE')
-    # USERNAME = config.HOTETEC_CONFIG.get('USERNAME')
-    # PASSWORD = config.HOTETEC_CONFIG.get('PASSWORD')
-    AGENCY_CODE = 'CL1'
-    USERNAME = 'CLTXML'
-    PASSWORD = 'CLTXML'
-    SYSTEM_CODE = 'XML'
+    AGENCY_CODE = config.HOTETEC_CONFIG.get('AGENCY_CODE')
+    USERNAME = config.HOTETEC_CONFIG.get('USERNAME')
+    PASSWORD = config.HOTETEC_CONFIG.get('PASSWORD')
     HEADERS = {'Content-Type': 'application/xml'}
     CURRENCY = 'USD'
     TOKEN = None
