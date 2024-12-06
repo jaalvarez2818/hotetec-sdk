@@ -16,6 +16,7 @@ class HotetecSDK:
     AGENCY_CODE = config.HOTETEC_CONFIG.get('AGENCY_CODE')
     USERNAME = config.HOTETEC_CONFIG.get('USERNAME')
     PASSWORD = config.HOTETEC_CONFIG.get('PASSWORD')
+    SYSTEM_CODE = 'XML'
     HEADERS = {'Content-Type': 'application/xml'}
     CURRENCY = 'USD'
     TOKEN = None
