@@ -92,6 +92,8 @@ class HotetecSDK:
                 if type(hotels_data) is dict:
                     hotels_data = [hotels_data]
 
+                exclude_room_services_attrs = ['ROOM_COMMERCIALNAME', 'ROOM']
+
                 hotels = []
                 for hotel in hotels_data:
                     availability = {}
@@ -125,10 +127,20 @@ class HotetecSDK:
                                 base_amount=float(room.get('impbas', '0') or '0'),
                                 iva_amount=float(room.get('impiva', '0') or '0'),
                                 tax_amount=float(room.get('imptax', '0') or '0'),
+                                description=next(
+                                    (obj for obj in (room.get('notser', []) or []) if obj.get('refnot') == 'ROOM'),
+                                    None
+                                ),
+                                commercial_name=next(
+                                    (obj for obj in (room.get('notser', []) or []) if
+                                     obj.get('refnot') == 'ROOM_COMMERCIALNAME'),
+                                    None
+                                ),
                                 services=[RoomService(
                                     reference=service.get('refnot'),
                                     name=service.get('txtinf')
-                                ) for service in room.get('notser', []) or []],
+                                ) for service in (room.get('notser', []) or []) if
+                                    service.get('refnot') not in exclude_room_services_attrs],
                                 cancellation_restrictions=cancellation_restrictions,
                                 non_commissionable_amount=float(room.get('impnoc', '0') or '0'),
                                 commissionable_amount=float(room.get('impcom', '0') or '0'),

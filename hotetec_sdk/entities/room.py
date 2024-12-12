@@ -22,6 +22,8 @@ class Room:
             commissionable_amount: float | None = None,
             fare_code: str | None = None,
             fare_name: str | None = None,
+            description: str | None = None,
+            commercial_name: str | None = None,
     ):
         self.id = room_id
         self.distribution = distribution
@@ -38,6 +40,8 @@ class Room:
         self.tax_amount = tax_amount
         self.cancellation_restrictions = cancellation_restrictions
         self.services = services
+        self.description = description
+        self.commercial_name = commercial_name
 
     def __str__(self):
         return self.id
