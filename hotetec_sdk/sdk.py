@@ -129,13 +129,13 @@ class HotetecSDK:
                                 tax_amount=float(room.get('imptax', '0') or '0'),
                                 description=next(
                                     (obj for obj in (room.get('notser', []) or []) if obj.get('refnot') == 'ROOM'),
-                                    None
-                                ),
+                                    {}
+                                ).get('txtinf'),
                                 commercial_name=next(
                                     (obj for obj in (room.get('notser', []) or []) if
                                      obj.get('refnot') == 'ROOM_COMMERCIALNAME'),
-                                    None
-                                ),
+                                    {}
+                                ).get('txtinf'),
                                 services=[RoomService(
                                     reference=service.get('refnot'),
                                     name=service.get('txtinf')
