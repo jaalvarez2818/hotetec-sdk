@@ -212,6 +212,21 @@ class HotetecSDK:
                 if response.get('coderr'):
                     return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
 
+                exclude_room_services_attrs = ['ROOM_COMMERCIALNAME', 'ROOM']
+
+                passenger_data = {}
+                for key, value in response.get('pasage', {}).items():
+                    if type(value) is dict:
+                        value = [value]
+                    for item in value:
+                        passenger_data[item.get('@id')] = {
+                            'birth_date': item.get('fecnac'),
+                            'non_commissionable_amount': item.get('impnoc'),
+                            'commissionable_amount': item.get('impcom'),
+                            'type': key[0].upper(),
+                            'id': item.get('@id'),
+                        }
+                print(response)
                 return {'response': {
                     'start_date': response.get('resser', {}).get('fecini'),
                     'end_date': response.get('resser', {}).get('fecfin'),
@@ -220,24 +235,41 @@ class HotetecSDK:
                         'category': response.get('resser', {}).get('codsca'),
                         'zone_code': response.get('resser', {}).get('codzge'),
                         'code': response.get('resser', {}).get('codser'),
+                        'commissionable_amount': response.get('impnoc', 0),
+                        'non_commissionable_amount': response.get('impcom', 0),
                     },
                     'payment': {
+                        'currency': response.get('coddiv'),
                         'total_amount': response.get('infrsr', {}).get('infrpg', {}).get('inffpg', {}).get('imptot'),
                         'limit_date': response.get('infrsr', {}).get('infrpg', {}).get('inffpg', {}).get('fecpag'),
                     },
                     'rooms': [
                         {
+                            'id': item['@id'],
                             'fare_code': item['codtrf'],
                             'fare_name': item['nomtrf'],
+                            'room_type': item['codsmo'],
                             'cancellation_restrictions': {
                                 'limit_date': item.get('rstcan', {}).get('feccan'),
                                 'amount': item.get('rstcan', {}).get('impcan'),
                             },
-                            'customers': item.get('estpas', {}).get('pasid', []),
-                            'services': [
-                                {'service': service.get('txtinf'), 'reference': service.get('refnot')}
-                                for service in item.get('notser', [])
-                            ]
+                            'customers': [passenger_data[pax] for pax in item.get('estpas', {}).get('pasid', [])],
+                            'commissionable_amount': item.get('impcom', 0),
+                            'non_commissionable_amount': item.get('impnoc', 0),
+                            'description': next(
+                                (obj for obj in (item.get('notser', []) or []) if obj.get('refnot') == 'ROOM'),
+                                {}
+                            ).get('txtinf'),
+                            'commercial_name': next(
+                                (obj for obj in (item.get('notser', []) or []) if
+                                 obj.get('refnot') == 'ROOM_COMMERCIALNAME'),
+                                {}
+                            ).get('txtinf'),
+                            'services': [RoomService(
+                                reference=service.get('refnot'),
+                                name=service.get('txtinf')
+                            ) for service in (item.get('notser', []) or []) if
+                                service.get('refnot') not in exclude_room_services_attrs],
                         } for item in response.get('resser', {}).get('estsmo', [])
                     ]
                 }, 'session_id': self.TOKEN}
