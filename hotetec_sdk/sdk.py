@@ -226,7 +226,11 @@ class HotetecSDK:
                             'type': key[0].upper(),
                             'id': item.get('@id'),
                         }
-                print(response)
+
+                reserve_data = response.get('resser', {}).get('estsmo', [])
+                if type(reserve_data) is dict:
+                    reserve_data = [reserve_data]
+
                 return {'response': {
                     'start_date': response.get('resser', {}).get('fecini'),
                     'end_date': response.get('resser', {}).get('fecfin'),
@@ -270,7 +274,7 @@ class HotetecSDK:
                                 name=service.get('txtinf')
                             ) for service in (item.get('notser', []) or []) if
                                 service.get('refnot') not in exclude_room_services_attrs],
-                        } for item in response.get('resser', {}).get('estsmo', [])
+                        } for item in reserve_data
                     ]
                 }, 'session_id': self.TOKEN}
             except Exception as e:
