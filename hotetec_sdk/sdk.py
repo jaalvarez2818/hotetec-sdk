@@ -202,6 +202,8 @@ class HotetecSDK:
 
         xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
 
+        print('XML REQUEST', xml_data)
+
         response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
 
         if response.status_code == 200:
