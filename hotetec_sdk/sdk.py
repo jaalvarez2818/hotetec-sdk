@@ -80,9 +80,12 @@ class HotetecSDK:
         xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
         response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
 
+        print('XML REQUEST', xml_data)
+
         if response.status_code == 200:
             try:
                 xml_dict = xmltodict.parse(response.text)
+                print('XML RESPONSE', response.text)
                 response = xml_dict.get('DisponibilidadHotelRespuesta')
 
                 if response.get('coderr'):
@@ -208,6 +211,7 @@ class HotetecSDK:
 
         if response.status_code == 200:
             try:
+                print('XML RESPONSE', response.text)
                 xml_dict = xmltodict.parse(response.text)
                 response = xml_dict.get('BloqueoServicioRespuesta')
 
@@ -310,9 +314,11 @@ class HotetecSDK:
         }
 
         xml_data = xmltodict.unparse(json_data, pretty=True, full_document=False)
+        print('XML REQUEST', xml_data)
         response = requests.post(self.URI, data=xml_data, headers=self.HEADERS)
         if response.status_code == 200:
             try:
+                print('XML RESPONSE', response.text)
                 xml_dict = xmltodict.parse(response.text)
                 response = xml_dict.get('ReservaCerrarRespuesta')
 
