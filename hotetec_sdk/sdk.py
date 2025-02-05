@@ -237,6 +237,13 @@ class HotetecSDK:
                 if type(reserve_data) is dict:
                     reserve_data = [reserve_data]
 
+                payment_info = response.get('infrsr', {}).get('infrpg', {})
+                if payment_info:
+                    if type(payment_info) is list:
+                        payment_info = next(
+                            filter(lambda x: x.get('inffpg', {}).get('infopg', {}).get('tippag') == 'C', payment_info),
+                            None)
+
                 return {'response': {
                     'start_date': response.get('resser', {}).get('fecini'),
                     'end_date': response.get('resser', {}).get('fecfin'),
@@ -250,8 +257,8 @@ class HotetecSDK:
                     },
                     'payment': {
                         'currency': response.get('coddiv'),
-                        'total_amount': response.get('infrsr', {}).get('infrpg', {}).get('inffpg', {}).get('imptot'),
-                        'limit_date': response.get('infrsr', {}).get('infrpg', {}).get('inffpg', {}).get('fecpag'),
+                        'total_amount': payment_info.get('inffpg', {}).get('imptot'),
+                        'limit_date': payment_info.get('inffpg', {}).get('fecpag'),
                     },
                     'rooms': [
                         {
