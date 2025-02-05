@@ -294,15 +294,15 @@ class HotetecSDK:
             raise f'Error: {response.status_code}'
 
     def reserve(self, contact_information, customers, notes):
+        notes_data = {}
+        if notes:
+            notes_data = {'notser': {'@id': 1, 'txtinf': notes}}
         json_data = {
             'ReservaCerrarPeticion': {
                 'ideses': self.TOKEN,
                 'codtou': 'HTI',
                 'accion': 'F',
-                'notser': {
-                    '@id': 1,
-                    'txtinf': notes
-                },
+                **notes_data,
                 'infpas': [
                     {'@id': customer.get('id'), 'fecnac': format(customer.get('birthdate'), '%d/%m/%Y')}
                     for customer in customers
