@@ -304,7 +304,12 @@ class HotetecSDK:
                 'accion': 'F',
                 **notes_data,
                 'infpas': [
-                    {'@id': customer.get('id'), 'fecnac': format(customer.get('birthdate'), '%d/%m/%Y')}
+                    {
+                        '@id': customer.get('id'),
+                        'fecnac': format(customer.get('birthdate'), '%d/%m/%Y'),
+                        'nombre': customer.get('first_name'),
+                        'priape': customer.get('last_name'),
+                    }
                     for customer in customers
                 ],
                 'percon': {
