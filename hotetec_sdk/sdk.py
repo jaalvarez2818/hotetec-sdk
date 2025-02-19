@@ -536,9 +536,9 @@ class HotetecSDK:
 
                 return {'response': response.get('servic')}
             except Exception as e:
-                print(f'Error: {e}')
+                raise Exception(f'Error: {response.status_code}')
         else:
-            raise f'Error: {response.status_code}'
+            raise Exception(f'Error: {response.status_code}')
 
     def get_hotel_information(self, hotel_code: str):
         json_data = {
@@ -561,6 +561,6 @@ class HotetecSDK:
 
                 return {'response': response.get('servic')}
             except Exception as e:
-                print(f'Error: {e}')
+                raise Exception(f'Error: {response.status_code}')
         else:
-            raise f'Error: {response.status_code}'
+            raise Exception(f'Error: {response.status_code}')
