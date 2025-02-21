@@ -92,6 +92,8 @@ class HotetecSDK:
                     return {'error': {'code': response.get('coderr'), 'text': response.get('txterr')}}
 
                 hotels_data = response.get('infhot')
+                if not hotels_data:
+                    hotels_data = []
                 if type(hotels_data) is dict:
                     hotels_data = [hotels_data]
 
